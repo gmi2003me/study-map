@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Study Reader</title>
+<style>
+  :root {
+    --bg: #f6f5f2;
+    --card: #ffffff;
+    --text: #262421;
+    --muted: #6b6862;
+    --accent: #6b5ce0;
+    --accent-hover: #5a4bd0;
+    --border: #e4e1da;
+    --pill-bg: #f0eee9;
+    --danger: #c0524a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1b19;
+      --card: #262421;
+      --text: #ece9e3;
+      --muted: #a39e94;
+      --accent: #8a7bf0;
+      --accent-hover: #9c8fff;
+      --border: #38352f;
+      --pill-bg: #322f2a;
+      --danger: #e07a72;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+  .wrap {
+    width: 100%;
+    max-width: 560px;
+  }
+  h1 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0 0 4px;
+    text-align: center;
+  }
+  .subtitle {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.88rem;
+    margin: 0 0 24px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .stage {
+    text-align: center;
+    padding: 28px 12px 22px;
+  }
+  .word {
+    font-size: 2.1rem;
+    font-weight: 700;
+    line-height: 1.25;
+    min-height: 2.6em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    word-break: break-word;
+  }
+  .status {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .progress-bar {
+    height: 5px;
+    border-radius: 3px;
+    background: var(--pill-bg);
+    overflow: hidden;
+    margin-top: 16px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.25s ease;
+  }
+  .controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+  }
+  button {
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary {
+    background: var(--pill-bg);
+    color: var(--text);
+  }
+  .btn-secondary:hover { filter: brightness(0.96); }
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .settings {
+    margin-top: 22px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .field label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 6px;
+  }
+  select {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+  }
+  .filebar {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .filebar .hint {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .file-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: var(--pill-bg);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .file-label:hover { filter: brightness(0.96); }
+  input[type="file"] { display: none; }
+  details {
+    margin-top: 16px;
+  }
+  summary {
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .wordlist {
+    margin-top: 10px;
+    max-height: 160px;
+    overflow-y: auto;
+    font-size: 0.85rem;
+    color: var(--text);
+    line-height: 1.6;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: var(--pill-bg);
+  }
+  .wordlist .current {
+    color: var(--accent);
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Word Study Reader</h1>
+  <p class="subtitle">Listens so you can study hands-free</p>
+
+  <div class="card">
+    <div class="stage">
+      <div class="word" id="wordDisplay">Ready</div>
+      <div class="status" id="statusLine">37 words loaded &middot; File order</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn-secondary" id="startOverBtn">Start Over</button>
+      <button class="btn-primary" id="pauseResumeBtn" disabled>Pause</button>
+    </div>
+
+    <div class="settings">
+      <div class="field">
+        <label for="orderSelect">Order</label>
+        <select id="orderSelect">
+          <option value="file">File order</option>
+          <option value="random">Random order</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="pauseSelect">Pause between words</label>
+        <select id="pauseSelect">
+          <option value="1">1 second</option>
+          <option value="2">2 seconds</option>
+          <option value="3" selected>3 seconds</option>
+          <option value="4">4 seconds</option>
+          <option value="5">5 seconds</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filebar">
+      <span class="hint">Edit <code>words.md</code> in any text editor, then reload it here.</span>
+      <label class="file-label" for="fileInput">Load word list (.md)</label>
+      <input type="file" id="fileInput" accept=".md,text/markdown,text/plain">
+    </div>
+
+    <details>
+      <summary>View loaded words</summary>
+      <div class="wordlist" id="wordListView"></div>
+    </details>
+  </div>
+</div>
+
+<script>
+(function () {
+  // Default word list (mirrors words.md), used until a file is loaded.
+  var DEFAULT_WORDS = [
+    "Asia", "North America", "South America", "Antarctica", "Europe", "Australia", "Africa",
+    "Indian Ocean", "Arctic Ocean", "Pacific Ocean", "Atlantic Ocean",
+    "Andes Mountains", "Himalayas", "Rocky Mountains", "Alps", "Caucasus Mountains", "Ural Mountains",
+    "Gobi Desert", "Sahara Desert",
+    "Mississippi River", "Ganges River", "Indus River", "Euphrates River", "Tigris River",
+    "Amazon River", "Nile River", "Huang He River (Yellow R.)", "Chang Jiang (Yangtze R.)",
+    "Black Sea", "Caspian Sea", "Lake Victoria", "Mediterranean Sea", "Red Sea",
+    "Persian Gulf", "Arabian Sea", "Bay of Bengal", "South China Sea"
+  ];
+
+  var words = DEFAULT_WORDS.slice();
+  var playOrder = [];
+  var currentPos = 0;
+  var status = "idle"; // idle | playing | paused | finished
+  var pendingTimeout = null;
+  var currentUtterance = null;
+
+  var wordDisplay = document.getElementById("wordDisplay");
+  var statusLine = document.getElementById("statusLine");
+  var progressFill = document.getElementById("progressFill");
+  var startOverBtn = document.getElementById("startOverBtn");
+  var pauseResumeBtn = document.getElementById("pauseResumeBtn");
+  var orderSelect = document.getElementById("orderSelect");
+  var pauseSelect = document.getElementById("pauseSelect");
+  var fileInput = document.getElementById("fileInput");
+  var wordListView = document.getElementById("wordListView");
+
+  function parseMarkdown(text) {
+    var lines = text.split(/\r?\n/);
+    var result = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      if (line.charAt(0) === "#" || line.charAt(0) === ">") continue;
+      // strip a leading "- ", "* ", or "1. " style marker
+      line = line.replace(/^[-*]\s+/, "");
+      line = line.replace(/^\d+[.)]\s+/, "");
+      if (line) result.push(line);
+    }
+    return result;
+  }
+
+  function renderWordListView() {
+    var html = "";
+    for (var i = 0; i < words.length; i++) {
+      var isCurrent = status !== "idle" && status !== "finished" &&
+        playOrder.length && playOrder[currentPos] === i;
+      html += '<div class="' + (isCurrent ? "current" : "") + '">' + escapeHtml(words[i]) + "</div>";
+    }
+    wordListView.innerHTML = html;
+  }
+
+  function escapeHtml(s) {
+    var d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function updateStatusLine(extra) {
+    var orderLabel = orderSelect.value === "random" ? "Random order" : "File order";
+    var base = words.length + " word" + (words.length === 1 ? "" : "s") + " loaded · " + orderLabel;
+    statusLine.textContent = extra ? base + " · " + extra : base;
+  }
+
+  function updateProgress() {
+    if (!playOrder.length) {
+      progressFill.style.width = "0%";
+      return;
+    }
+    var pct = Math.min(100, (currentPos / playOrder.length) * 100);
+    progressFill.style.width = pct + "%";
+  }
+
+  function buildPlayOrder() {
+    var idx = [];
+    for (var i = 0; i < words.length; i++) idx.push(i);
+    if (orderSelect.value === "random") {
+      for (var j = idx.length - 1; j > 0; j--) {
+        var k = Math.floor(Math.random() * (j + 1));
+        var tmp = idx[j]; idx[j] = idx[k]; idx[k] = tmp;
+      }
+    }
+    playOrder = idx;
+  }
+
+  function getPauseMs() {
+    return parseInt(pauseSelect.value, 10) * 1000;
+  }
+
+  function stopAllSpeech() {
+    if (pendingTimeout) { clearTimeout(pendingTimeout); pendingTimeout = null; }
+    window.speechSynthesis.cancel();
+    currentUtterance = null;
+  }
+
+  function speakCurrent() {
+    if (!words.length) {
+      wordDisplay.textContent = "No words loaded";
+      status = "idle";
+      pauseResumeBtn.disabled = true;
+      return;
+    }
+    if (currentPos >= playOrder.length) {
+      status = "finished";
+      wordDisplay.textContent = "Done!";
+      updateStatusLine("finished all " + playOrder.length + " words");
+      pauseResumeBtn.textContent = "Pause";
+      pauseResumeBtn.disabled = true;
+      updateProgress();
+      renderWordListView();
+      return;
+    }
+
+    var word = words[playOrder[currentPos]];
+    wordDisplay.textContent = word;
+    updateStatusLine("speaking " + (currentPos + 1) + " / " + playOrder.length);
+    updateProgress();
+    renderWordListView();
+
+    var utter = new SpeechSynthesisUtterance(word);
+    currentUtterance = utter;
+    utter.onend = function () {
+      if (status !== "playing") return; // paused/stopped while speaking
+      pendingTimeout = setTimeout(function () {
+        pendingTimeout = null;
+        currentPos++;
+        speakCurrent();
+      }, getPauseMs());
+    };
+    utter.onerror = function () {
+      if (status !== "playing") return;
+      pendingTimeout = setTimeout(function () {
+        pendingTimeout = null;
+        currentPos++;
+        speakCurrent();
+      }, getPauseMs());
+    };
+    window.speechSynthesis.speak(utter);
+  }
+
+  function startOver() {
+    stopAllSpeech();
+    buildPlayOrder();
+    currentPos = 0;
+    status = "playing";
+    pauseResumeBtn.disabled = false;
+    pauseResumeBtn.textContent = "Pause";
+    speakCurrent();
+  }
+
+  function togglePauseResume() {
+    if (status === "playing") {
+      // We're either mid-utterance or in the gap between words.
+      if (pendingTimeout) {
+        // In the gap: the word at currentPos already finished speaking,
+        // so advance past it before pausing so Resume continues correctly.
+        clearTimeout(pendingTimeout);
+        pendingTimeout = null;
+        currentPos++;
+      } else {
+        // Mid-utterance: stop it; onend will see status !== "playing" and no-op.
+        window.speechSynthesis.cancel();
+      }
+      status = "paused";
+      pauseResumeBtn.textContent = "Resume";
+      updateStatusLine("paused");
+    } else if (status === "paused") {
+      status = "playing";
+      pauseResumeBtn.textContent = "Pause";
+      speakCurrent();
+    }
+  }
+
+  function loadWordsFromFile(file) {
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var parsed = parseMarkdown(String(e.target.result || ""));
+      if (!parsed.length) {
+        alert("No words found in that file. Make sure each word is on its own line.");
+        return;
+      }
+      stopAllSpeech();
+      words = parsed;
+      playOrder = [];
+      currentPos = 0;
+      status = "idle";
+      wordDisplay.textContent = "Ready";
+      pauseResumeBtn.disabled = true;
+      pauseResumeBtn.textContent = "Pause";
+      updateStatusLine();
+      updateProgress();
+      renderWordListView();
+    };
+    reader.onerror = function () {
+      alert("Could not read that file.");
+    };
+    reader.readAsText(file);
+  }
+
+  startOverBtn.addEventListener("click", startOver);
+  pauseResumeBtn.addEventListener("click", togglePauseResume);
+  orderSelect.addEventListener("change", function () { updateStatusLine(status === "idle" ? "" : undefined); });
+  fileInput.addEventListener("change", function (e) {
+    if (e.target.files && e.target.files[0]) {
+      loadWordsFromFile(e.target.files[0]);
+    }
+    fileInput.value = "";
+  });
+
+  // Initial paint
+  updateStatusLine();
+  renderWordListView();
+})();
+</script>
+</body>
+</html>
